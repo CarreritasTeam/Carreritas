@@ -8,18 +8,12 @@ package mygame;
 import com.jme3.ai.navmesh.NavMesh;
 import com.jme3.ai.navmesh.NavMeshPathfinder;
 import com.jme3.ai.navmesh.Path.Waypoint;
-import com.jme3.asset.AssetManager;
-import com.jme3.bullet.BulletAppState;
 import com.jme3.bullet.control.BetterCharacterControl;
-import com.jme3.bullet.control.RigidBodyControl;
 import com.jme3.collision.CollisionResults;
 import com.jme3.export.InputCapsule;
 import com.jme3.export.JmeExporter;
 import com.jme3.export.JmeImporter;
 import com.jme3.export.OutputCapsule;
-import com.jme3.material.Material;
-import com.jme3.math.ColorRGBA;
-import com.jme3.math.Quaternion;
 import com.jme3.math.Ray;
 import com.jme3.math.Vector3f;
 import com.jme3.renderer.RenderManager;
@@ -29,8 +23,6 @@ import com.jme3.scene.Node;
 import com.jme3.scene.Spatial;
 import com.jme3.scene.control.AbstractControl;
 import com.jme3.scene.control.Control;
-import com.jme3.scene.shape.Box;
-import com.jme3.scene.shape.Cylinder;
 import java.io.IOException;
 
 /**
@@ -50,7 +42,7 @@ public class ControlCoche extends AbstractControl {
     private NavMesh navMesh;
     
     private Geometry player; // Despues se reemplazara al implementar el modelo3d
-    private Node bola;
+    private Node bola; //TODO esto hay que instanciarlo
 
     public ControlCoche(Node playerNode, BetterCharacterControl controler, NavMeshPathfinder navi) {
         this.playerNode = playerNode;
@@ -98,6 +90,10 @@ public class ControlCoche extends AbstractControl {
         }
 
         // Disparo
+        Ray ray = new Ray(playerNode.getLocalTranslation(), playerNode.getLocalRotation().getRotationColumn(1));
+        CollisionResults results = new CollisionResults();
+        bola.collideWith(player, results);
+        results.getClosestCollision();
     }
 
     public void computeNewPath(Vector3f finalPoint) {
