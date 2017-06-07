@@ -7,6 +7,7 @@ package mygame;
 
 import com.jme3.ai.navmesh.NavMesh;
 import com.jme3.ai.navmesh.NavMeshPathfinder;
+import com.jme3.ai.navmesh.Path.Waypoint;
 import com.jme3.asset.AssetManager;
 import com.jme3.bullet.BulletAppState;
 import com.jme3.bullet.control.BetterCharacterControl;
@@ -18,6 +19,7 @@ import com.jme3.export.JmeImporter;
 import com.jme3.export.OutputCapsule;
 import com.jme3.material.Material;
 import com.jme3.math.ColorRGBA;
+import com.jme3.math.Quaternion;
 import com.jme3.math.Ray;
 import com.jme3.math.Vector3f;
 import com.jme3.renderer.RenderManager;
@@ -39,13 +41,12 @@ public class ControlCoche extends AbstractControl {
     private BetterCharacterControl playerControl;
 
     private Node playerNode; // Nodo donde estara el jugador en el mapa
-    
-    private Vector3f nextPoint;
+
+    private Vector3f finalPoint;
     private boolean moving = false;
-    private boolean onFinalPosition = false;
-    
+
     private NavMeshPathfinder navi;
-    
+
     private Geometry player; // Despues se reemplazara al implementar el modelo3d
 
     public ControlCoche(Node playerNode, AssetManager assetManager, BulletAppState bulletAppState, NavMesh navMesh) {
@@ -60,40 +61,85 @@ public class ControlCoche extends AbstractControl {
         player.setLocalTranslation(0, 3, 0);
 
         playerNode.attachChild(player);
-        
+
         playerControl = new BetterCharacterControl(1.5f, 9f, 15);
         playerNode.addControl(playerControl);
         playerControl.setGravity(new Vector3f(0, -10, 0));
         playerControl.setJumpForce(new Vector3f(0, 30, 0));
         playerControl.warp(new Vector3f(0, 2, 0));
-        
+
         bulletAppState.getPhysicsSpace().add(playerControl);
         bulletAppState.getPhysicsSpace().addAll(playerNode);
-        
-        // Crear navMesh
+
+        // Crear navigator
+        navi = new NavMeshPathfinder(navMesh);
     }
-    
-    public ControlCoche(){
+
+    public ControlCoche() {
     }
 
     @Override
     protected void controlUpdate(float tpf) {
         playerControl.setWalkDirection(Vector3f.ZERO);
-        
+
         // Movimiento
-        if(moving && nextPoint != null){
-            Vector3f direccion = nextPoint.subtract(playerNode.getLocalTranslation());
-            playerControl.setWalkDirection(direccion.normalize().mult(20));
-            if(playerNode.getLocalTranslation().distance(nextPoint) <= 4){
-                onFinalPosition = true;
+        if (moving && finalPoint != null) {
+            Waypoint wayPoint = navi.getNextWaypoint();
+
+            if (wayPoint != null) {
+                Vector3f direccion = wayPoint.getPosition().subtract(playerNode.getLocalTranslation());
+                playerControl.setWalkDirection(direccion.normalize().mult(20));
+                
+                // Settear direccion del coche
+                Quaternion directionRot = new Quaternion();
+                directionRot.lookAt(direccion.normalize(), Vector3f.UNIT_Y);
+                playerNode.setLocalRotation(directionRot);
+
+                if (playerNode.getLocalTranslation().distance(wayPoint.getPosition()) <= 4 && !navi.isAtGoalWaypoint()) {
+                    System.out.println("Next waypoint");
+                    navi.goToNextWaypoint();
+                }
+
+                if (navi.isAtGoalWaypoint()) {
+                    System.out.println("AT waypoint");
+                    moving = false;
+                    navi.clearPath();
+                }
             }
+
         }
+
+        // Disparo
         
-        // 
     }
-    
-    public void setNextPoint(Vector3f nextPoint){
-        this.nextPoint = nextPoint;
+
+    public void computeNewPath(Vector3f finalPoint) {
+        navi.setPosition(playerNode.getLocalTranslation());
+        navi.computePath(finalPoint);
+    }
+
+    public BetterCharacterControl getPlayerControl() {
+        return playerControl;
+    }
+
+    public void setPlayerControl(BetterCharacterControl playerControl) {
+        this.playerControl = playerControl;
+    }
+
+    public Vector3f getFinalPoint() {
+        return finalPoint;
+    }
+
+    public void setFinalPoint(Vector3f finalPoint) {
+        this.finalPoint = finalPoint;
+    }
+
+    public boolean isMoving() {
+        return moving;
+    }
+
+    public void setMoving(boolean moving) {
+        this.moving = moving;
     }
 
     @Override
