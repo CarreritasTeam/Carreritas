@@ -45,10 +45,12 @@ public class ControlCoche extends AbstractControl {
     private boolean onFinalPosition = false;
     
     private NavMeshPathfinder navi;
+    private NavMesh navMesh;
     
     private Geometry player; // Despues se reemplazara al implementar el modelo3d
+    private Node bola;
 
-    public ControlCoche(Node playerNode, AssetManager assetManager, BulletAppState bulletAppState, NavMesh navMesh) {
+    public ControlCoche(Node playerNode, AssetManager assetManager, BulletAppState bulletAppState, NavMesh navMesh, Node bola) {
         this.playerNode = playerNode;
 
         // Seteo temporal, deberia de cargar el modelo
@@ -70,15 +72,23 @@ public class ControlCoche extends AbstractControl {
         bulletAppState.getPhysicsSpace().add(playerControl);
         bulletAppState.getPhysicsSpace().addAll(playerNode);
         
+        this.navMesh=navMesh;
+
+        this.bola=bola;
         // Crear navMesh
     }
     
     public ControlCoche(){
+        System.err.println("Empty ControlCcohe constructor has been called, we should avoid this");
     }
 
     @Override
     protected void controlUpdate(float tpf) {
         playerControl.setWalkDirection(Vector3f.ZERO);
+        navi = new NavMeshPathfinder(navMesh);
+        navi.setPosition(playerNode.getLocalTranslation());
+        navi.computePath(bola.getLocalTranslation());
+        nextPoint=navi.getWaypointPosition();
         
         // Movimiento
         if(moving && nextPoint != null){
@@ -89,7 +99,8 @@ public class ControlCoche extends AbstractControl {
             }
         }
         
-        // 
+        //
+        
     }
     
     public void setNextPoint(Vector3f nextPoint){
