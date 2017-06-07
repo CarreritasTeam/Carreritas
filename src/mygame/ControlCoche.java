@@ -118,6 +118,11 @@ public class ControlCoche extends AbstractControl {
         this.finalPoint = finalPoint;
     }
 
+    public void setBola(Node bola) {
+        this.bola = bola;
+    }
+    
+
     public boolean isMoving() {
         return moving;
     }
