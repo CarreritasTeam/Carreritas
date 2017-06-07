@@ -33,16 +33,16 @@ import com.jme3.scene.shape.Box;
  *
  * @author normenhansen
  */
-public class Main extends SimpleApplication implements ActionListener {
+public class OldMain extends SimpleApplication implements ActionListener{
 
     private BulletAppState bulletAppState;
-
-    private Vector3f targetVector = new Vector3f(30, 0, 9);
-
-    private ControlCoche control;
     private Node playerNode;
+    private BetterCharacterControl playerControl;
     
-    private NavMesh navmesh;
+    private NavMeshPathfinder navi;
+    private Vector3f targetVector = new Vector3f(30, 0, 9);
+    
+    private boolean naviOn = false;
 
     public static void main(String[] args) {
         Main app = new Main();
@@ -73,8 +73,9 @@ public class Main extends SimpleApplication implements ActionListener {
     private void initInput() {
         inputManager.addMapping("Mouse", new MouseButtonTrigger(MouseInput.BUTTON_LEFT));
         inputManager.addMapping("Space", new KeyTrigger(KeyInput.KEY_SPACE));
-
-        inputManager.addListener(this, new String[]{"Mouse", "Space"});
+        
+        
+        inputManager.addListener(this, new String[] {"Mouse", "Space"});
     }
 
     private void initScene() {
@@ -96,20 +97,8 @@ public class Main extends SimpleApplication implements ActionListener {
         sun.setDirection((new Vector3f(-0.5f, -0.5f, -0.5f)).normalizeLocal());
         sun.setColor(ColorRGBA.White);
         rootNode.addLight(sun);
-
-        playerNode = new Node("PlayerNode");
-
-        Node n = (Node) scene;
-        Geometry g = (Geometry) n.getChild("NavMesh");
-        Mesh mesh = g.getMesh();
-        navmesh = new NavMesh(mesh);
-
-        crearCoche();
-
-    }
-
-    // Crea un coche
-    public void crearCoche() {
+        
+        //Node player = (Node) assetManager.loadAsset("Models/Ninja/Ninja.mesh.xml");
         Box c = new Box(2f, 9f, 2f);
         Geometry player = new Geometry("Player", c);
         Material material = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
@@ -118,33 +107,61 @@ public class Main extends SimpleApplication implements ActionListener {
         player.setLocalTranslation(0, 3, 0);
         //RigidBodyControl body = new RigidBodyControl(1f);
         //player.addControl(body);
-
+        
         //body.setPhysicsLocation(new Vector3f(0, 9, 0));
+        
         //player.scale(0.05f, 0.05f, 0.05f);
         playerNode = new Node("PlayerNode");
         playerNode.attachChild(player);
-
-        BetterCharacterControl playerControl = new BetterCharacterControl(1.5f, 9f, 15);
+        
+        playerControl = new BetterCharacterControl(1.5f, 9f, 15);
         playerNode.addControl(playerControl);
         playerControl.setGravity(new Vector3f(0, -10, 0));
         playerControl.setJumpForce(new Vector3f(0, 30, 0));
         playerControl.warp(new Vector3f(0, 2, 0));
-
+        
         bulletAppState.getPhysicsSpace().add(playerControl);
         bulletAppState.getPhysicsSpace().addAll(playerNode);
         //bulletAppState.getPhysicsSpace().add(body);
-
+        
         rootNode.attachChild(playerNode);
         
-        NavMeshPathfinder navi = new NavMeshPathfinder(navmesh);
+        Node n = (Node) scene;
+        Geometry g = (Geometry) n.getChild("NavMesh");
+        Mesh mesh = g.getMesh();
+        NavMesh navmesh = new NavMesh(mesh);
         
-        control = new ControlCoche(playerNode, playerControl, navi);
-        playerNode.addControl(control);
-
+        navi = new NavMeshPathfinder(navmesh);
+        navi.setPosition(playerNode.getLocalTranslation());
+        navi.computePath(targetVector);
     }
 
     @Override
     public void simpleUpdate(float tpf) {
+        playerControl.setWalkDirection(Vector3f.ZERO);
+        
+        if(naviOn){
+            Waypoint wayPoint = navi.getNextWaypoint();
+            
+            if(wayPoint == null){
+                System.out.println("Waypoint null");
+            }else{
+                Vector3f v = wayPoint.getPosition().subtract(playerNode.getLocalTranslation());
+                playerControl.setWalkDirection(v.normalize().mult(20));
+                
+                if(playerNode.getLocalTranslation().distance(wayPoint.getPosition()) <= 4 && !navi.isAtGoalWaypoint()){
+                    System.out.println("Next waypoint");
+                    navi.goToNextWaypoint();
+                }
+                
+                if(navi.isAtGoalWaypoint()){
+                    System.out.println("AT waypoint");
+                    naviOn = false;
+                    navi.clearPath();
+                }
+            }
+            
+        }
     }
 
     @Override
@@ -154,19 +171,20 @@ public class Main extends SimpleApplication implements ActionListener {
 
     @Override
     public void onAction(String name, boolean isPressed, float tpf) {
-        if (name.equals("Mouse") && !isPressed) {
+        if(name.equals("Mouse") && !isPressed){
             CollisionResults results = new CollisionResults();
             Ray ray = new Ray(cam.getLocation(), cam.getDirection());
-
+            
             rootNode.collideWith(ray, results);
-            if (results.size() > 0) {
+            if(results.size() > 0){
                 targetVector = results.getClosestCollision().getContactPoint();
-                control.computeNewPath(targetVector);
+                navi.setPosition(playerNode.getLocalTranslation());
+                navi.computePath(targetVector);
             }
         }
-
-        if (name.equals("Space") && isPressed) {
-            control.setMoving(!control.isMoving());
+        
+        if(name.equals("Space") && isPressed){
+            naviOn = !naviOn;
         }
     }
 }

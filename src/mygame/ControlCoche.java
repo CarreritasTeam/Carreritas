@@ -30,6 +30,7 @@ import com.jme3.scene.Spatial;
 import com.jme3.scene.control.AbstractControl;
 import com.jme3.scene.control.Control;
 import com.jme3.scene.shape.Box;
+import com.jme3.scene.shape.Cylinder;
 import java.io.IOException;
 
 /**
@@ -49,30 +50,12 @@ public class ControlCoche extends AbstractControl {
 
     private Geometry player; // Despues se reemplazara al implementar el modelo3d
 
-    public ControlCoche(Node playerNode, AssetManager assetManager, BulletAppState bulletAppState, NavMesh navMesh) {
+    public ControlCoche(Node playerNode, BetterCharacterControl controler, NavMeshPathfinder navi) {
         this.playerNode = playerNode;
+        this.navi = navi;
 
-        // Seteo temporal, deberia de cargar el modelo
-        Box c = new Box(2f, 9f, 2f);
-        player = new Geometry("Player", c);
-        Material material = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
-        material.setColor("Color", new ColorRGBA(0.247f, 0.285f, 0.678f, 1));
-        player.setMaterial(material);
-        player.setLocalTranslation(0, 3, 0);
-
-        playerNode.attachChild(player);
-
-        playerControl = new BetterCharacterControl(1.5f, 9f, 15);
-        playerNode.addControl(playerControl);
-        playerControl.setGravity(new Vector3f(0, -10, 0));
-        playerControl.setJumpForce(new Vector3f(0, 30, 0));
-        playerControl.warp(new Vector3f(0, 2, 0));
-
-        bulletAppState.getPhysicsSpace().add(playerControl);
-        bulletAppState.getPhysicsSpace().addAll(playerNode);
-
-        // Crear navigator
-        navi = new NavMeshPathfinder(navMesh);
+        spatial = playerNode;
+        playerControl = controler;
     }
 
     public ControlCoche() {
@@ -89,12 +72,12 @@ public class ControlCoche extends AbstractControl {
             if (wayPoint != null) {
                 Vector3f direccion = wayPoint.getPosition().subtract(playerNode.getLocalTranslation());
                 playerControl.setWalkDirection(direccion.normalize().mult(20));
-                
-                // Settear direccion del coche
-                Quaternion directionRot = new Quaternion();
-                directionRot.lookAt(direccion.normalize(), Vector3f.UNIT_Y);
-                playerNode.setLocalRotation(directionRot);
 
+                // Settear direccion del coche
+                //Quaternion directionRot = new Quaternion();
+                //directionRot.lookAt(direccion.normalize(), Vector3f.UNIT_Y);
+                //player.setLocalRotation(directionRot);
+                playerNode.lookAt(wayPoint.getPosition(), Vector3f.UNIT_Y);
                 if (playerNode.getLocalTranslation().distance(wayPoint.getPosition()) <= 4 && !navi.isAtGoalWaypoint()) {
                     System.out.println("Next waypoint");
                     navi.goToNextWaypoint();
@@ -105,15 +88,17 @@ public class ControlCoche extends AbstractControl {
                     moving = false;
                     navi.clearPath();
                 }
+            } else {
+                System.out.println("Esta a null");
             }
 
         }
 
         // Disparo
-        
     }
 
     public void computeNewPath(Vector3f finalPoint) {
+        this.finalPoint = finalPoint;
         navi.setPosition(playerNode.getLocalTranslation());
         navi.computePath(finalPoint);
     }
@@ -158,16 +143,12 @@ public class ControlCoche extends AbstractControl {
     public void read(JmeImporter im) throws IOException {
         super.read(im);
         InputCapsule in = im.getCapsule(this);
-        //TODO: load properties of this Control, e.g.
-        //this.value = in.readFloat("name", defaultValue);
     }
 
     @Override
     public void write(JmeExporter ex) throws IOException {
         super.write(ex);
         OutputCapsule out = ex.getCapsule(this);
-        //TODO: save properties of this Control, e.g.
-        //out.write(this.value, "name", defaultValue);
     }
 
 }
