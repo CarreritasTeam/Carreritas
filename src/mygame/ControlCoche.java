@@ -47,8 +47,10 @@ public class ControlCoche extends AbstractControl {
     private boolean moving = false;
 
     private NavMeshPathfinder navi;
-
+    private NavMesh navMesh;
+    
     private Geometry player; // Despues se reemplazara al implementar el modelo3d
+    private Node bola;
 
     public ControlCoche(Node playerNode, BetterCharacterControl controler, NavMeshPathfinder navi) {
         this.playerNode = playerNode;
@@ -57,8 +59,9 @@ public class ControlCoche extends AbstractControl {
         spatial = playerNode;
         playerControl = controler;
     }
-
-    public ControlCoche() {
+    
+    public ControlCoche(){
+        System.err.println("Empty ControlCcohe constructor has been called, we should avoid this");
     }
 
     @Override
