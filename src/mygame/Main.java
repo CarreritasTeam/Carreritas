@@ -145,7 +145,6 @@ public class Main extends SimpleApplication implements ActionListener{
             
             if(wayPoint == null){
                 System.out.println("Waypoint null");
-                return;
             }else{
                 Vector3f v = wayPoint.getPosition().subtract(playerNode.getLocalTranslation());
                 playerControl.setWalkDirection(v.normalize().mult(20));
