@@ -84,10 +84,7 @@ public class ControlCoche extends AbstractControl {
     @Override
     protected void controlUpdate(float tpf) {
         playerControl.setWalkDirection(Vector3f.ZERO);
-        navi.setPosition(playerNode.getLocalTranslation());
-        navi.computePath(bola.getLocalTranslation());
-        
-        
+
         // Movimiento
         if (moving && finalPoint != null) {
             Waypoint wayPoint = navi.getNextWaypoint();
@@ -116,8 +113,6 @@ public class ControlCoche extends AbstractControl {
         }
 
         // Disparo
-        
-        //
         
     }
 
