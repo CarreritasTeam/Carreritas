@@ -1,0 +1,10 @@
+Material MyMaterial : Common/MatDefs/Misc/Unshaded.j3md {
+    MaterialParameters {
+        BackfaceShadows : true
+        ColorMap : Flip assets/Textures/down.tga
+        GlowMap : Flip assets/Textures/sahara_ft.tga
+        Color : 0.024858892 0.7386938 0.5767364 1.0
+    }
+    AdditionalRenderState {
+    }
+}
