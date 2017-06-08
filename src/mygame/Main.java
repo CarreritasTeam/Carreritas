@@ -228,8 +228,8 @@ public class Main extends SimpleApplication implements ActionListener {
         // entre bullets y coche
         List<Spatial> listaBulletQuitar = new ArrayList<>();
 
-        System.out.println(playerNodes.getQuantity());
-        System.out.println(bulletNodes.getQuantity());
+//        System.out.println(playerNodes.getQuantity());
+//        System.out.println(bulletNodes.getQuantity());
 
         // Deteccion collision coches
         for (int i = 0; i < playerNodes.getQuantity(); ++i) {
