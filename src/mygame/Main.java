@@ -18,6 +18,8 @@ import com.jme3.light.AmbientLight;
 import com.jme3.light.DirectionalLight;
 import com.jme3.material.Material;
 import com.jme3.math.ColorRGBA;
+import com.jme3.math.FastMath;
+import com.jme3.math.Quaternion;
 import com.jme3.math.Ray;
 import com.jme3.math.Vector3f;
 import com.jme3.renderer.RenderManager;
@@ -54,7 +56,7 @@ public class Main extends SimpleApplication implements ActionListener {
         bulletAppState = new BulletAppState();
         stateManager.attach(bulletAppState);
 
-        bulletAppState.setDebugEnabled(true); // enable debug mode
+        bulletAppState.setDebugEnabled(false); // enable debug mode
         flyCam.setMoveSpeed(50f);
 
         initInput();
@@ -73,16 +75,19 @@ public class Main extends SimpleApplication implements ActionListener {
     private void initInput() {
         inputManager.addMapping("Mouse", new MouseButtonTrigger(MouseInput.BUTTON_LEFT));
         inputManager.addMapping("Space", new KeyTrigger(KeyInput.KEY_SPACE));
+        inputManager.addMapping("MouseRight", new MouseButtonTrigger(MouseInput.BUTTON_RIGHT));
 
-        inputManager.addListener(this, new String[]{"Mouse", "Space"});
+        inputManager.addListener(this, new String[]{"Mouse", "Space", "MouseRight"});
     }
 
     private void initScene() {
-        Spatial scene = assetManager.loadModel("Models/terreno.j3o");
+        Spatial scene = assetManager.loadModel("Scenes/terreno.j3o");
         scene.setLocalTranslation(0, 0, 0);
         bulletAppState.getPhysicsSpace().addAll(scene);
         rootNode.attachChild(scene);
 
+        cam.setLocation(new Vector3f(0, 5, 10));
+        
         /**
          * A white ambient light source.
          */
@@ -102,6 +107,7 @@ public class Main extends SimpleApplication implements ActionListener {
         Node n = (Node) scene;
         Geometry g = (Geometry) n.getChild("NavMesh");
         Mesh mesh = g.getMesh();
+        
         navmesh = new NavMesh(mesh);
 
         crearCoche();
@@ -110,22 +116,27 @@ public class Main extends SimpleApplication implements ActionListener {
 
     // Crea un coche
     public void crearCoche() {
-        Box c = new Box(2f, 9f, 2f);
-        Geometry player = new Geometry("Player", c);
-        Material material = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
-        material.setColor("Color", new ColorRGBA(0.247f, 0.285f, 0.678f, 1));
-        player.setMaterial(material);
-        player.setLocalTranslation(0, 3, 0);
+        //Box c = new Box(2f, 9f, 2f);
+        //Geometry player = new Geometry("Player", c);
+        //Material material = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
+        //material.setColor("Color", new ColorRGBA(0.247f, 0.285f, 0.678f, 1));
+        //player.setMaterial(material);
+       //player.setLocalTranslation(0, 0, 0);
         //RigidBodyControl body = new RigidBodyControl(1f);
         //player.addControl(body);
-
+        
+        Spatial player = assetManager.loadModel("Models/CocheSimple.j3o");
+        Quaternion spatialGiro = new Quaternion();
+        player.setLocalRotation(spatialGiro.fromAngleAxis(FastMath.DEG_TO_RAD * 180, Vector3f.UNIT_Y));
+        player.scale(1.5f);
         //body.setPhysicsLocation(new Vector3f(0, 9, 0));
         //player.scale(0.05f, 0.05f, 0.05f);
         playerNode = new Node("PlayerNode");
         playerNode.attachChild(player);
 
-        BetterCharacterControl playerControl = new BetterCharacterControl(1.5f, 9f, 15);
+        BetterCharacterControl playerControl = new BetterCharacterControl(1.5f, 9f, 20);
         playerNode.addControl(playerControl);
+        playerNode.setLocalTranslation(0, 16, 0);
         playerControl.setGravity(new Vector3f(0, -10, 0));
         playerControl.setJumpForce(new Vector3f(0, 30, 0));
         playerControl.warp(new Vector3f(0, 2, 0));
@@ -138,7 +149,7 @@ public class Main extends SimpleApplication implements ActionListener {
         
         NavMeshPathfinder navi = new NavMeshPathfinder(navmesh);
         
-        control = new ControlCoche(playerNode, playerControl, navi);
+        control = new ControlCoche(playerNode, playerControl, navi, assetManager, bulletAppState, rootNode);
         playerNode.addControl(control);
 
     }
@@ -167,6 +178,11 @@ public class Main extends SimpleApplication implements ActionListener {
 
         if (name.equals("Space") && isPressed) {
             control.setMoving(!control.isMoving());
+        }
+        
+        if(name.equals("MouseRight") && !isPressed){
+            //control.setShot(true);
+            control.freeze();
         }
     }
 }

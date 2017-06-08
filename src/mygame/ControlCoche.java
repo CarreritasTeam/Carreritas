@@ -48,19 +48,36 @@ public class ControlCoche extends AbstractControl {
 
     private NavMeshPathfinder navi;
     private NavMesh navMesh;
-    
+
     private Geometry player; // Despues se reemplazara al implementar el modelo3d
     private Node bola;
 
-    public ControlCoche(Node playerNode, BetterCharacterControl controler, NavMeshPathfinder navi) {
+    private boolean shot = false;
+    private boolean shooting = false;
+    private float cooldownShot;
+    private final float COOL_DOWN_SHOT = 1f; // un segundo 
+
+    private boolean freezed = false;
+    private float cooldownFreeze;
+    private final float COOLDOWN_FREEZE = 2f; // dos segundos
+
+    private AssetManager assetManager;
+    private BulletAppState bulletAppState;
+    private Node rootNode;
+
+    public ControlCoche(Node playerNode, BetterCharacterControl controler, NavMeshPathfinder navi, AssetManager assetsManager, BulletAppState bulletAppState, Node rootNode) {
         this.playerNode = playerNode;
         this.navi = navi;
+        this.assetManager = assetsManager;
+        this.rootNode = rootNode;
+        this.bulletAppState = bulletAppState;
 
         spatial = playerNode;
         playerControl = controler;
+
     }
-    
-    public ControlCoche(){
+
+    public ControlCoche() {
         System.err.println("Empty ControlCcohe constructor has been called, we should avoid this");
     }
 
@@ -68,42 +85,86 @@ public class ControlCoche extends AbstractControl {
     protected void controlUpdate(float tpf) {
         playerControl.setWalkDirection(Vector3f.ZERO);
 
-        // Movimiento
-        if (moving && finalPoint != null) {
-            Waypoint wayPoint = navi.getNextWaypoint();
+        if (!freezed) {
 
-            if (wayPoint != null) {
-                Vector3f direccion = wayPoint.getPosition().subtract(playerNode.getLocalTranslation());
-                playerControl.setWalkDirection(direccion.normalize().mult(20));
+            // Movimiento
+            if (moving && finalPoint != null) {
+                Waypoint wayPoint = navi.getNextWaypoint();
 
-                // Settear direccion del coche
-                //Quaternion directionRot = new Quaternion();
-                //directionRot.lookAt(direccion.normalize(), Vector3f.UNIT_Y);
-                //player.setLocalRotation(directionRot);
-                playerNode.lookAt(wayPoint.getPosition(), Vector3f.UNIT_Y);
-                if (playerNode.getLocalTranslation().distance(wayPoint.getPosition()) <= 4 && !navi.isAtGoalWaypoint()) {
-                    System.out.println("Next waypoint");
-                    navi.goToNextWaypoint();
+                if (wayPoint != null) {
+                    Vector3f direccion = wayPoint.getPosition().subtract(playerNode.getLocalTranslation());
+                    playerControl.setWalkDirection(direccion.normalize().mult(20));
+
+                    // Settear direccion del coche
+                    //Quaternion directionRot = new Quaternion();
+                    //directionRot.lookAt(direccion.normalize(), Vector3f.UNIT_Y);
+                    //playerNode.setLocalRotation(directionRot);
+                    playerNode.lookAt(wayPoint.getPosition(), Vector3f.UNIT_Y);
+
+                    if (playerNode.getLocalTranslation().distance(wayPoint.getPosition()) <= 4 && !navi.isAtGoalWaypoint()) {
+                        System.out.println("Next waypoint");
+                        navi.goToNextWaypoint();
+                    }
+
+                    if (navi.isAtGoalWaypoint()) {
+                        System.out.println("AT waypoint");
+                        moving = false;
+                        navi.clearPath();
+                    }
+
                 }
 
-                if (navi.isAtGoalWaypoint()) {
-                    System.out.println("AT waypoint");
-                    moving = false;
-                    navi.clearPath();
-                }
-            } else {
-                System.out.println("Esta a null");
             }
 
+            // Disparo
+            if (shot && !shooting) {
+                shoot();
+                shot = false;
+                shooting = true;
+                cooldownShot = COOL_DOWN_SHOT;
+            } else if (cooldownShot > 0) {
+                cooldownShot -= tpf;
+                if (cooldownShot <= 0) {
+                    shooting = false;
+                    shot = false;
+                }
+            }
+        }else{
+            // Car is freezed, wait for defrost
+            if(cooldownFreeze > 0){
+                cooldownFreeze -= tpf;
+            }else{
+                freezed = false;
+            }
         }
-
-        // Disparo
     }
 
     public void computeNewPath(Vector3f finalPoint) {
         this.finalPoint = finalPoint;
         navi.setPosition(playerNode.getLocalTranslation());
         navi.computePath(finalPoint);
+    }
+
+    public void freeze() {
+        freezed = true;
+        cooldownFreeze = COOLDOWN_FREEZE;
+    }
+
+    private void shoot() {
+
+        Vector3f direccion = playerNode.getLocalRotation().getRotationColumn(2).normalize();
+        Spatial ball = assetManager.loadModel("Models/ball.j3o");
+        ball.setLocalTranslation(playerNode.getLocalTranslation().add(direccion.mult(2f)));
+        ball.scale(0.5f);
+
+        ball.setUserData("radius", 0.5f);
+
+        RigidBodyControl ballControl = new RigidBodyControl(1.5f);
+        ball.addControl(ballControl);
+        rootNode.attachChild(ball);
+        bulletAppState.getPhysicsSpace().add(ballControl);
+
+        ballControl.setLinearVelocity(direccion.mult(100));
     }
 
     public BetterCharacterControl getPlayerControl() {
@@ -128,6 +189,14 @@ public class ControlCoche extends AbstractControl {
 
     public void setMoving(boolean moving) {
         this.moving = moving;
+    }
+
+    public boolean isShot() {
+        return shot;
+    }
+
+    public void setShot(boolean shot) {
+        this.shot = shot;
     }
 
     @Override
