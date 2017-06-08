@@ -54,6 +54,9 @@ public class Main extends SimpleApplication implements ActionListener {
     // Player Nodes contiene a todos los nodos jugadores
     // bulletNodes contiene a todos los nodos Bala
     private NavMesh navmesh;
+    
+    
+    private RigidBodyControl landscapeControl;
 
     public static void main(String[] args) {
         Main app = new Main();
@@ -91,7 +94,14 @@ public class Main extends SimpleApplication implements ActionListener {
     }
 
     private void initScene() {
-        Spatial scene = assetManager.loadModel("Scenes/terreno.j3o");
+        Spatial scene = assetManager.loadModel("Scenes/Plataforma.j3o");
+        
+        landscapeControl = new RigidBodyControl(0.0f);
+        scene.addControl(landscapeControl);
+       
+        
+        bulletAppState.getPhysicsSpace().add(landscapeControl);
+        
         scene.setLocalTranslation(0, 0, 0);
         bulletAppState.getPhysicsSpace().addAll(scene);
         rootNode.attachChild(scene);
