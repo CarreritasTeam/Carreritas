@@ -38,6 +38,7 @@ public class Bola extends AbstractControl {
 
     private Vector3f finalPoint;
     private boolean moving = false;
+    private byte debug = 1; //0= no output; 1= debug output; 2=perFrameOutput, verbosity intensifies
 
     private NavMeshPathfinder navi;
     private NavMesh navMesh;
@@ -46,10 +47,11 @@ public class Bola extends AbstractControl {
     private Node bola; //TODO esto hay que instanciarlo
 
     private final Vector3f[] puntos = {
-        new Vector3f(0, 0, 1),
-        new Vector3f(0, 0, 2),
-        new Vector3f(0, 0, 3)
-    }; //TODO replace with actual points
+        new Vector3f(79.885666f, 1.9073486E-6f, -56.16912f),
+        new Vector3f(53.739586f, -1.9073486E-6f, 102.26378f),
+        new Vector3f(-88.340645f, 0, 94.01254f),
+        new Vector3f(-62.67897f, 0, 10.206712f)
+    };
     private byte lastUsed;
     private Random rnd;
 
@@ -61,25 +63,38 @@ public class Bola extends AbstractControl {
         playerControl = controler;
 
         rnd = new Random();
-        lastUsed = (byte) rnd.nextInt(3);
-        finalPoint = puntos[lastUsed];
-        navi.clearPath();
-        navi.computePath(finalPoint);
+        moveToNextPoint();
     }
 
     public Bola() {
         System.err.println("Empty Bola constructor has been called, we should avoid this");
     }
 
+    private void moveToNextPoint() {
+        byte temp;
+        do {
+            temp = (byte) rnd.nextInt(puntos.length);
+        } while (temp == lastUsed);
+        lastUsed = temp;
+        finalPoint = puntos[lastUsed];
+        navi.clearPath();
+        navi.computePath(finalPoint);
+        debugMsg("Me dirijo al punto " + lastUsed,1);
+        moving = true;
+    }
+
     @Override
     protected void controlUpdate(float tpf) {
         playerControl.setWalkDirection(Vector3f.ZERO);
-
+        debugMsg("Hola, deberia moverme 0",2);
         // Movimiento
         if (moving && finalPoint != null) {
             Waypoint wayPoint = navi.getNextWaypoint();
+            debugMsg("Hola, deberia moverme 1",2);
 
             if (wayPoint != null) {
+                debugMsg("Hola, deberia moverme 2",2);
+
                 Vector3f direccion = wayPoint.getPosition().subtract(playerNode.getLocalTranslation());
                 playerControl.setWalkDirection(direccion.normalize().mult(20));
 
@@ -89,23 +104,17 @@ public class Bola extends AbstractControl {
                 //player.setLocalRotation(directionRot);
                 playerNode.lookAt(wayPoint.getPosition(), Vector3f.UNIT_Y);
                 if (playerNode.getLocalTranslation().distance(wayPoint.getPosition()) <= 4 && !navi.isAtGoalWaypoint()) {
-                    System.out.println("Next waypoint");
+                    debugMsg("Next waypoint",1);
                     navi.goToNextWaypoint();
                 }
 
                 if (navi.isAtGoalWaypoint()) {
                     Byte temp;
-                    System.out.println("AT waypoint");
-                    do {
-                        temp = (byte) rnd.nextInt(3);
-                    } while (temp == lastUsed);
-                    lastUsed = temp;
-                    finalPoint = puntos[lastUsed];
-                    navi.clearPath();
-                    navi.computePath(finalPoint);
+                    debugMsg("AT waypoint",1);
+                    moveToNextPoint();
                 }
             } else {
-                System.out.println("Esta a null");
+                debugMsg("Esta a null",1);
             }
 
         }
@@ -120,18 +129,14 @@ public class Bola extends AbstractControl {
     public void onCollisionWithPlayer() {
         Byte temp;
         do {
-            temp = (byte) rnd.nextInt(3);
+            temp = (byte) rnd.nextInt(puntos.length);
         } while (temp == lastUsed);
         lastUsed = temp;
         finalPoint = puntos[lastUsed];
         playerNode.setLocalTranslation(finalPoint);
-        do {
-            temp = (byte) rnd.nextInt(3);
-        } while (temp == lastUsed);
-        lastUsed = temp;
-        finalPoint = puntos[lastUsed];
-        navi.clearPath();
-        navi.computePath(finalPoint);
+        debugMsg("Teletransportado al punto " + lastUsed,1);
+        moveToNextPoint();
+
     }
 
     public BetterCharacterControl getPlayerControl() {
@@ -156,6 +161,10 @@ public class Bola extends AbstractControl {
 
     public void setMoving(boolean moving) {
         this.moving = moving;
+    }
+    
+    private void debugMsg(String s, int verbo){
+        if(debug>=verbo) System.out.println(s);
     }
 
     @Override
