@@ -108,7 +108,6 @@ public class ControlCoche extends AbstractControl {
                     playerNode.lookAt(wayPoint.getPosition(), Vector3f.UNIT_Y);
 
                     if (playerNode.getLocalTranslation().distance(wayPoint.getPosition()) <= 4 && !navi.isAtGoalWaypoint()) {
-
                         System.out.println("Next waypoint");
                         navi.goToNextWaypoint();
                     }

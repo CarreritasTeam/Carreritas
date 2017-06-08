@@ -59,6 +59,11 @@ public class Main extends SimpleApplication implements ActionListener {
 
     private boolean start = false;
 
+    private float tiempo_espera = 0;
+    private final float TIEMPO_COOLDOWN = 3f;
+
+    private boolean mooving = false;
+
     public static void main(String[] args) {
         Main app = new Main();
         app.start();
@@ -231,7 +236,6 @@ public class Main extends SimpleApplication implements ActionListener {
 
 //        System.out.println(playerNodes.getQuantity());
 //        System.out.println(bulletNodes.getQuantity());
-
         // Deteccion collision coches
         for (int i = 0; i < playerNodes.getQuantity(); ++i) {
             Spatial playerGetted = playerNodes.getChild(i);
@@ -254,8 +258,7 @@ public class Main extends SimpleApplication implements ActionListener {
 
             // Collision con la bola
             // DEBERIA DE FUNCIONAR
-            
-            if(checkCollision(playerGetted, bolaNode)){
+            if (checkCollision(playerGetted, bolaNode)) {
                 Bola ctrl = bolaNode.getControl(Bola.class);
                 ctrl.onCollisionWithPlayer();
                 ControlCoche ctrlCoche = playerGetted.getControl(ControlCoche.class);
@@ -304,12 +307,24 @@ public class Main extends SimpleApplication implements ActionListener {
         handleCollisions();
 
         if (start) {
-            Vector3f posBola = bolaNode.getLocalTranslation();
-            for (int i = 0; i < playerNodes.getQuantity(); ++i) {
-                Spatial playerGetted = playerNodes.getChild(i);
-                ControlCoche ctrl = playerGetted.getControl(ControlCoche.class);
+            if (!mooving) {
+                Vector3f posBola = bolaNode.getLocalTranslation();
 
-                ctrl.computeNewPath(posBola);
+                for (int i = 0; i < playerNodes.getQuantity(); ++i) {
+                    Spatial playerGetted = playerNodes.getChild(i);
+                    ControlCoche ctrl = playerGetted.getControl(ControlCoche.class);
+
+                    ctrl.computeNewPath(posBola);
+                    ctrl.setMoving(!ctrl.isMoving());
+                    
+                }
+                mooving = true;
+                tiempo_espera = TIEMPO_COOLDOWN;
+            }
+            tiempo_espera -= tpf;
+            
+            if(tiempo_espera <= 0){
+                mooving = false;
             }
         }
     }
@@ -326,27 +341,34 @@ public class Main extends SimpleApplication implements ActionListener {
             Ray ray = new Ray(cam.getLocation(), cam.getDirection());
 
             rootNode.collideWith(ray, results);
+            /*
             if (results.size() > 0) {
                 targetVector = results.getClosestCollision().getContactPoint();
                 ControlCoche control = playerNodes.getChild(selectedCar).getControl(ControlCoche.class);
                 control.computeNewPath(targetVector);
                 System.out.println("Vector pinchado = " + targetVector.toString());
             }
+             */
+            ControlCoche control = playerNodes.getChild(selectedCar).getControl(ControlCoche.class);
+            control.computeNewPath(bolaNode.getLocalTranslation());
+
         }
 
         if (name.equals("Space") && isPressed) {
             // Settear a todos a moving
-            /*
-            ControlCoche control = playerNodes.getChild(selectedCar).getControl(ControlCoche.class);
-            control.setMoving(!control.isMoving());
-             */
+            //start = true;
+            //ControlCoche control = playerNodes.getChild(selectedCar).getControl(ControlCoche.class);
+            //control.setMoving(!control.isMoving());
+
             start = !start;
             for (int i = 0; i < playerNodes.getQuantity(); ++i) {
                 Spatial playerGetted = playerNodes.getChild(i);
                 ControlCoche ctrl = playerGetted.getControl(ControlCoche.class);
-
+                ctrl.computeNewPath(bolaNode.getLocalTranslation());
                 ctrl.setMoving(!ctrl.isMoving());
             }
+            mooving = true;
+            tiempo_espera = TIEMPO_COOLDOWN;
         }
 
         if (name.equals("MouseRight") && !isPressed) {
