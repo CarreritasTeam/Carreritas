@@ -47,8 +47,8 @@ public class Bola extends AbstractControl {
     private Node bola; //TODO esto hay que instanciarlo
 
     private final Vector3f[] puntos = {
-        new Vector3f(79.885666f, 0, -56.16912f),
-        new Vector3f(53.739586f, 0, 102.26378f),
+        new Vector3f(79.885666f, 1.9073486E-6f, -56.16912f),
+        new Vector3f(53.739586f, -1.9073486E-6f, 102.26378f),
         new Vector3f(-88.340645f, 0, 94.01254f),
         new Vector3f(-62.67897f, 0, 10.206712f)
     };

@@ -172,7 +172,7 @@ public class Main extends SimpleApplication implements ActionListener {
     }
 
     public void crearBola() {
-        Sphere c = new Sphere(5, 5, 1f);
+        Sphere c = new Sphere(5, 5, 0.5f);
         Geometry bolaGeom = new Geometry("Esfera", c);
         Material material = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
         material.setColor("Color", new ColorRGBA(0.247f, 0.285f, 0.678f, 1));
@@ -186,7 +186,7 @@ public class Main extends SimpleApplication implements ActionListener {
         bolaNode = new Node("Esfera");
         bolaNode.attachChild(bolaGeom);
 
-        BetterCharacterControl bolaControl = new BetterCharacterControl(1f, 1f, 1);
+        BetterCharacterControl bolaControl = new BetterCharacterControl(0.5f, 0.5f, 20);
         bolaNode.addControl(bolaControl);
         bolaControl.setGravity(new Vector3f(0, -10, 0));
         bolaControl.setJumpForce(new Vector3f(0, 30, 0));
