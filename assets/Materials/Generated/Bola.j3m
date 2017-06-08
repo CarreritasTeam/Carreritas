@@ -1,0 +1,7 @@
+Material MyMaterial : Common/MatDefs/Post/CartoonEdge.j3md {
+    MaterialParameters {
+        Texture : Flip assets/Textures/dirt.jpg
+    }
+    AdditionalRenderState {
+    }
+}

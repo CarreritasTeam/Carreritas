@@ -1,0 +1,11 @@
+Material My Material : Common/MatDefs/Light/Lighting.j3md {
+     MaterialParameters {
+        DiffuseMap : Textures/Rock/TexturesCom_RockRough0030_2_seamless_S.jpg
+        UseVertexColor : false
+        UseMaterialColors : false
+        VertexLighting : false
+        BackfaceShadows : false
+     }
+    AdditionalRenderState {
+    }
+}
