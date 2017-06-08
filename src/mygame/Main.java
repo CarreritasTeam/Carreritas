@@ -29,6 +29,8 @@ import com.jme3.scene.Node;
 import com.jme3.scene.Spatial;
 import com.jme3.scene.shape.Box;
 import com.jme3.scene.shape.Sphere;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * This is the Main Class of your Game. You should only do initialization here.
@@ -44,8 +46,12 @@ public class Main extends SimpleApplication implements ActionListener {
 
     private ControlCoche control;
     private Bola bola;
-    private Node playerNode,bolaNode;
-    
+    private Node bolaNode, playerNodes, bulletNodes;
+
+    private int id = 0;
+
+    // Player Nodes contiene a todos los nodos jugadores
+    // bulletNodes contiene a todos los nodos Bala
     private NavMesh navmesh;
 
     public static void main(String[] args) {
@@ -89,7 +95,14 @@ public class Main extends SimpleApplication implements ActionListener {
         rootNode.attachChild(scene);
 
         cam.setLocation(new Vector3f(0, 5, 10));
-        
+
+        // PlayerNodes y Bola Nodes instanciar
+        playerNodes = new Node("Players");
+        bulletNodes = new Node("Bullets");
+
+        rootNode.attachChild(bulletNodes);
+        rootNode.attachChild(playerNodes);
+
         /**
          * A white ambient light source.
          */
@@ -104,44 +117,35 @@ public class Main extends SimpleApplication implements ActionListener {
         sun.setColor(ColorRGBA.White);
         rootNode.addLight(sun);
 
-        playerNode = new Node("PlayerNode");
+        //playerNode = new Node("PlayerNode");
 
         Node n = (Node) scene;
         Geometry g = (Geometry) n.getChild("NavMesh");
         Mesh mesh = g.getMesh();
-        
+
         navmesh = new NavMesh(mesh);
 
-        crearBola();
-        crearCoche();
-        
+        //crearBola();
+        crearCoche(new Vector3f(0, 0, 0));
         
 
     }
 
     // Crea un coche
-    public void crearCoche() {
-        //Box c = new Box(2f, 9f, 2f);
-        //Geometry player = new Geometry("Player", c);
-        //Material material = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
-        //material.setColor("Color", new ColorRGBA(0.247f, 0.285f, 0.678f, 1));
-        //player.setMaterial(material);
-       //player.setLocalTranslation(0, 0, 0);
-        //RigidBodyControl body = new RigidBodyControl(1f);
-        //player.addControl(body);
-        
+    public void crearCoche(Vector3f pos) {
+
         Spatial player = assetManager.loadModel("Models/CocheSimple.j3o");
         Quaternion spatialGiro = new Quaternion();
         player.setLocalRotation(spatialGiro.fromAngleAxis(FastMath.DEG_TO_RAD * 180, Vector3f.UNIT_Y));
         player.scale(1.5f);
         //body.setPhysicsLocation(new Vector3f(0, 9, 0));
         //player.scale(0.05f, 0.05f, 0.05f);
-        playerNode = new Node("PlayerNode");
+        Node playerNode = new Node("PlayerNode");
         playerNode.attachChild(player);
 
         BetterCharacterControl playerControl = new BetterCharacterControl(1.5f, 9f, 20);
         playerNode.addControl(playerControl);
-        playerNode.setLocalTranslation(0, 16, 0);
+        playerNode.setLocalTranslation(pos.x, 16, pos.z);
         playerControl.setGravity(new Vector3f(0, -10, 0));
         playerControl.setJumpForce(new Vector3f(0, 30, 0));
         playerControl.warp(new Vector3f(0, 2, 0));
@@ -150,52 +154,122 @@ public class Main extends SimpleApplication implements ActionListener {
         bulletAppState.getPhysicsSpace().addAll(playerNode);
         //bulletAppState.getPhysicsSpace().add(body);
 
-        rootNode.attachChild(playerNode);
-        
+        // Poner en el node de players
+        playerNodes.attachChild(playerNode);
+        //rootNode.attachChild(playerNode);
+
         NavMeshPathfinder navi = new NavMeshPathfinder(navmesh);
-        
-        control = new ControlCoche(playerNode, playerControl, navi, assetManager, bulletAppState, rootNode);
+
+        control = new ControlCoche(playerNode, playerControl, navi, assetManager, bulletAppState, bulletNodes);
         playerNode.addControl(control);
 
+        // Poner control y datos
+        playerNode.setUserData("Control", control);
+        playerNode.setUserData("radius", 2f); // Settear si el coche lo ponemos a otra escala
+        playerNode.setName("Coche" + id);
+        ++id; // para distincion de coches
+
     }
-    
-    
+
     public void crearBola() {
         Sphere c = new Sphere(5, 5, 1f);
-        Geometry player = new Geometry("Esfera", c);
+        Geometry bolaGeom = new Geometry("Esfera", c);
         Material material = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
         material.setColor("Color", new ColorRGBA(0.247f, 0.285f, 0.678f, 1));
-        player.setMaterial(material);
-        player.setLocalTranslation(0, 3, 0);
+        bolaGeom.setMaterial(material);
+        bolaGeom.setLocalTranslation(0, 3, 0);
         //RigidBodyControl body = new RigidBodyControl(1f);
         //player.addControl(body);
 
         //body.setPhysicsLocation(new Vector3f(0, 9, 0));
         //player.scale(0.05f, 0.05f, 0.05f);
-        playerNode = new Node("Esfera");
-        playerNode.attachChild(player);
+        bolaNode = new Node("Esfera");
+        bolaNode.attachChild(bolaGeom);
 
-        BetterCharacterControl playerControl = new BetterCharacterControl(1f, 1f, 1);
-        playerNode.addControl(playerControl);
-        playerControl.setGravity(new Vector3f(0, -10, 0));
-        playerControl.setJumpForce(new Vector3f(0, 30, 0));
-        playerControl.warp(new Vector3f(0, 2, 0));
+        BetterCharacterControl bolaControl = new BetterCharacterControl(1f, 1f, 1);
+        bolaNode.addControl(bolaControl);
+        bolaControl.setGravity(new Vector3f(0, -10, 0));
+        bolaControl.setJumpForce(new Vector3f(0, 30, 0));
+        bolaControl.warp(new Vector3f(0, 2, 0));
 
-        bulletAppState.getPhysicsSpace().add(playerControl);
-        bulletAppState.getPhysicsSpace().addAll(playerNode);
+        bulletAppState.getPhysicsSpace().add(bolaControl);
+        bulletAppState.getPhysicsSpace().addAll(bolaNode);
         //bulletAppState.getPhysicsSpace().add(body);
 
-        rootNode.attachChild(playerNode);
-        
-        NavMeshPathfinder navi = new NavMeshPathfinder(navmesh);
-        
-        bola = new Bola(playerNode, playerControl, navi);
-        bolaNode.addControl(control);
+        rootNode.attachChild(bolaNode);
 
+        NavMeshPathfinder navi = new NavMeshPathfinder(navmesh);
+
+        bola = new Bola(bolaNode, bolaControl, navi);
+        bolaNode.addControl(control);
+        bolaNode.setUserData("radius", 0.5f); // Set user data para collision
+
+    }
+
+    private void handleCollisions() {
+        // entre bullets y coche
+        List<Spatial> listaBulletQuitar = new ArrayList<>();
+        
+        System.out.println(playerNodes.getQuantity());
+        System.out.println(bulletNodes.getQuantity());
+        
+        // Deteccion collision coches
+        for (int i = 0; i < playerNodes.getQuantity(); ++i) {
+            Spatial playerGetted = playerNodes.getChild(i);
+            for (int j = 0; j < bulletNodes.getQuantity(); ++j) {
+                Spatial bulletGetted = bulletNodes.getChild(j);
+                if(checkCollision(playerGetted, bulletGetted)){
+                    // Ha colisionado, player perder vida, bullet quitar de lista despues de iterar
+                    listaBulletQuitar.add(bulletGetted);
+                    
+                    // ESTO NO DEBERIA DE PETAR
+                    ControlCoche ctrl = playerGetted.getControl(ControlCoche.class);
+                    ctrl.makeHit();
+                }
+            }
+            
+            // Collision con la bola
+            // IN DEVELOPMENT
+        }
+        
+        if(!listaBulletQuitar.isEmpty()){
+            for(Spatial bullet : listaBulletQuitar){
+                // NO DEBERIA DE PETAR lo de physics
+                bulletAppState.getPhysicsSpace().remove(bullet.getControl(RigidBodyControl.class));
+                bulletNodes.detachChild(bullet);
+            }
+        }
+        
+        
+    }
+
+    private boolean checkCollision(Spatial a, Spatial b) {
+        float distance = a.getLocalTranslation().distance(b.getLocalTranslation());
+        float maxDistance = (Float) a.getUserData("radius") + (Float) b.getUserData("radius");
+        return distance <= maxDistance;
+    }
+    
+    private void testShot(){
+        Vector3f direccion = cam.getDirection().normalize();
+        Spatial ball = assetManager.loadModel("Models/ball.j3o");
+        ball.setLocalTranslation(cam.getLocation());
+        ball.scale(0.5f);
+
+        ball.setUserData("radius", 0.5f);
+
+        RigidBodyControl ballControl = new RigidBodyControl(1.5f);
+        ball.addControl(ballControl);
+        bulletNodes.attachChild(ball);
+        bulletAppState.getPhysicsSpace().add(ballControl);
+
+        ball.setUserData("Control", ballControl);
+        
+        ballControl.setLinearVelocity(direccion.mult(100));
     }
 
     @Override
     public void simpleUpdate(float tpf) {
+        handleCollisions();
     }
 
     @Override
@@ -219,10 +293,11 @@ public class Main extends SimpleApplication implements ActionListener {
         if (name.equals("Space") && isPressed) {
             control.setMoving(!control.isMoving());
         }
-        
-        if(name.equals("MouseRight") && !isPressed){
+
+        if (name.equals("MouseRight") && !isPressed) {
+            testShot();
             //control.setShot(true);
-            control.freeze();
+            //control.freeze();
         }
     }
 }

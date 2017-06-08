@@ -58,13 +58,15 @@ public class ControlCoche extends AbstractControl {
 
     private AssetManager assetManager;
     private BulletAppState bulletAppState;
-    private Node rootNode;
+    private Node bulletNodes;
+    
+    private int healthPoints = 50;
 
-    public ControlCoche(Node playerNode, BetterCharacterControl controler, NavMeshPathfinder navi, AssetManager assetsManager, BulletAppState bulletAppState, Node rootNode) {
+    public ControlCoche(Node playerNode, BetterCharacterControl controler, NavMeshPathfinder navi, AssetManager assetsManager, BulletAppState bulletAppState, Node bulletNodes) {
         this.playerNode = playerNode;
         this.navi = navi;
         this.assetManager = assetsManager;
-        this.rootNode = rootNode;
+        this.bulletNodes = bulletNodes;
         this.bulletAppState = bulletAppState;
 
         spatial = playerNode;
@@ -149,17 +151,24 @@ public class ControlCoche extends AbstractControl {
 
         Vector3f direccion = playerNode.getLocalRotation().getRotationColumn(2).normalize();
         Spatial ball = assetManager.loadModel("Models/ball.j3o");
-        ball.setLocalTranslation(playerNode.getLocalTranslation().add(direccion.mult(2f)));
+        ball.setLocalTranslation(playerNode.getLocalTranslation().add(direccion.mult(3f)));
         ball.scale(0.5f);
 
         ball.setUserData("radius", 0.5f);
 
         RigidBodyControl ballControl = new RigidBodyControl(1.5f);
         ball.addControl(ballControl);
-        rootNode.attachChild(ball);
+        bulletNodes.attachChild(ball);
         bulletAppState.getPhysicsSpace().add(ballControl);
 
+        ball.setUserData("Control", ballControl);
+        
         ballControl.setLinearVelocity(direccion.mult(100));
+    }
+    
+    public void makeHit(){
+        healthPoints -= 10;
+        System.out.println("Hitteado: " + healthPoints);
     }
 
     public BetterCharacterControl getPlayerControl() {
