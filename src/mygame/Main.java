@@ -102,7 +102,8 @@ public class Main extends SimpleApplication implements ActionListener {
         scene.addControl(landscapeControl);
         bulletAppState.getPhysicsSpace().add(landscapeControl);
 
-        scene.setLocalTranslation(0, 0, 0);
+        //scene.setLocalTranslation(0, -30, 0);
+        landscapeControl.setPhysicsLocation(new Vector3f(0, -5, 0));
         bulletAppState.getPhysicsSpace().addAll(scene);
         rootNode.attachChild(scene);
 
@@ -164,8 +165,8 @@ public class Main extends SimpleApplication implements ActionListener {
         BetterCharacterControl playerControl = new BetterCharacterControl(1.5f, 3, 20);
         playerNode.addControl(playerControl);
         playerNode.setLocalTranslation(pos.x, 16, pos.z);
-        playerControl.setGravity(new Vector3f(0, -10, 0));
-        playerControl.setJumpForce(new Vector3f(0, 30, 0));
+        //playerControl.setGravity(new Vector3f(0, -10, 0));
+        //playerControl.setJumpForce(new Vector3f(0, 0, 0));
         playerControl.warp(new Vector3f(0, 2, 0));
 
         bulletAppState.getPhysicsSpace().add(playerControl);
@@ -253,14 +254,13 @@ public class Main extends SimpleApplication implements ActionListener {
 
             // Collision con la bola
             // DEBERIA DE FUNCIONAR
-            /*
+            
             if(checkCollision(playerGetted, bolaNode)){
                 Bola ctrl = bolaNode.getControl(Bola.class);
                 ctrl.onCollisionWithPlayer();
                 ControlCoche ctrlCoche = playerGetted.getControl(ControlCoche.class);
                 ctrlCoche.setScore(ctrlCoche.getScore() + 10);
             }
-             */
         }
 
         if (!listaBulletQuitar.isEmpty()) {
