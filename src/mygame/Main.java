@@ -43,17 +43,21 @@ public class Main extends SimpleApplication implements ActionListener {
     private BulletAppState bulletAppState;
 
     private Vector3f targetVector = new Vector3f(30, 0, 9);
-    
+
     private Bola bola;
     private Node bolaNode, playerNodes, bulletNodes;
 
     private int id = 0;
-    
+
     private int selectedCar = 0;
 
     // Player Nodes contiene a todos los nodos jugadores
     // bulletNodes contiene a todos los nodos Bala
     private NavMesh navmesh;
+
+    private RigidBodyControl landscapeControl;
+
+    private boolean start = false;
 
     public static void main(String[] args) {
         Main app = new Main();
@@ -65,7 +69,7 @@ public class Main extends SimpleApplication implements ActionListener {
         bulletAppState = new BulletAppState();
         stateManager.attach(bulletAppState);
 
-        bulletAppState.setDebugEnabled(true); // enable debug mode
+        bulletAppState.setDebugEnabled(false); // enable debug mode
         flyCam.setMoveSpeed(50f);
 
         initInput();
@@ -91,7 +95,13 @@ public class Main extends SimpleApplication implements ActionListener {
     }
 
     private void initScene() {
-        Spatial scene = assetManager.loadModel("Scenes/terreno.j3o");
+        //Spatial scene = assetManager.loadModel("Scenes/terreno.j3o");
+        Spatial scene = assetManager.loadModel("Scenes/Plataforma.j3o");
+
+        landscapeControl = new RigidBodyControl(0.0f);
+        scene.addControl(landscapeControl);
+        bulletAppState.getPhysicsSpace().add(landscapeControl);
+
         scene.setLocalTranslation(0, 0, 0);
         bulletAppState.getPhysicsSpace().addAll(scene);
         rootNode.attachChild(scene);
@@ -118,7 +128,7 @@ public class Main extends SimpleApplication implements ActionListener {
         sun.setDirection((new Vector3f(-0.5f, -0.5f, -0.5f)).normalizeLocal());
         sun.setColor(ColorRGBA.White);
         rootNode.addLight(sun);
-        
+
         iniciarsky();
 
         //playerNode = new Node("PlayerNode");
@@ -129,15 +139,14 @@ public class Main extends SimpleApplication implements ActionListener {
         navmesh = new NavMesh(mesh);
 
         crearBola();
-        crearCoche(new Vector3f(0, 0, 0));
-        crearCoche(new Vector3f(20, 0, 10));
+        crearCoche(new Vector3f(0, 10, 0));
+        crearCoche(new Vector3f(50, 10, 10));
 
     }
-    
+
     private void iniciarsky() {
         Spatial sky = assetManager.loadModel("Scenes/Sky.j3o");
         rootNode.attachChild(sky);
-
     }
 
     // Crea un coche
@@ -186,7 +195,7 @@ public class Main extends SimpleApplication implements ActionListener {
         Material material = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
         material.setColor("Color", new ColorRGBA(0.247f, 0.285f, 0.678f, 1));
         bolaGeom.setMaterial(material);
-        bolaGeom.setLocalTranslation(0, 3, 0);
+        bolaGeom.setLocalTranslation(0, 0, 0);//(0, 3, 0);
         //RigidBodyControl body = new RigidBodyControl(1f);
         //player.addControl(body);
 
@@ -228,7 +237,7 @@ public class Main extends SimpleApplication implements ActionListener {
             for (int j = 0; j < bulletNodes.getQuantity(); ++j) {
                 Spatial bulletGetted = bulletNodes.getChild(j);
                 if (checkCollision(playerGetted, bulletGetted)) {
-                    
+
                     // Comprobar si e bullet no es del propio coche
                     if (!playerGetted.getName().equals(bulletGetted.getName())) {
                         // Ha colisionado, player perder vida, bullet quitar de lista despues de iterar
@@ -238,7 +247,7 @@ public class Main extends SimpleApplication implements ActionListener {
                         ControlCoche ctrl = playerGetted.getControl(ControlCoche.class);
                         ctrl.makeHit();
                     }
-                    
+
                 }
             }
 
@@ -286,13 +295,23 @@ public class Main extends SimpleApplication implements ActionListener {
         ball.setUserData("Control", ballControl);
 
         ballControl.setLinearVelocity(direccion.mult(100));
-        
-        ball.setName("Coche" + (id-1));
+
+        ball.setName("Coche" + (id - 1));
     }
 
     @Override
     public void simpleUpdate(float tpf) {
         handleCollisions();
+
+        if (start) {
+            Vector3f posBola = bolaNode.getLocalTranslation();
+            for (int i = 0; i < playerNodes.getQuantity(); ++i) {
+                Spatial playerGetted = playerNodes.getChild(i);
+                ControlCoche ctrl = playerGetted.getControl(ControlCoche.class);
+
+                ctrl.computeNewPath(posBola);
+            }
+        }
     }
 
     @Override
@@ -311,13 +330,23 @@ public class Main extends SimpleApplication implements ActionListener {
                 targetVector = results.getClosestCollision().getContactPoint();
                 ControlCoche control = playerNodes.getChild(selectedCar).getControl(ControlCoche.class);
                 control.computeNewPath(targetVector);
-                System.out.println("Vector pinchado = "+targetVector.toString());
+                System.out.println("Vector pinchado = " + targetVector.toString());
             }
         }
 
         if (name.equals("Space") && isPressed) {
+            // Settear a todos a moving
+            /*
             ControlCoche control = playerNodes.getChild(selectedCar).getControl(ControlCoche.class);
             control.setMoving(!control.isMoving());
+             */
+            start = !start;
+            for (int i = 0; i < playerNodes.getQuantity(); ++i) {
+                Spatial playerGetted = playerNodes.getChild(i);
+                ControlCoche ctrl = playerGetted.getControl(ControlCoche.class);
+
+                ctrl.setMoving(!ctrl.isMoving());
+            }
         }
 
         if (name.equals("MouseRight") && !isPressed) {
@@ -327,9 +356,9 @@ public class Main extends SimpleApplication implements ActionListener {
             //control.setShot(true);
             //control.freeze();
         }
-        
-        if(name.equals("ChangeCar") && !isPressed){
-            selectedCar = (selectedCar+1) % 2; 
+
+        if (name.equals("ChangeCar") && !isPressed) {
+            selectedCar = (selectedCar + 1) % 2;
         }
     }
 }
