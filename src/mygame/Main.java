@@ -77,7 +77,7 @@ public class Main extends SimpleApplication implements ActionListener {
         mat.setColor("Color", ColorRGBA.Blue);
         geom.setMaterial(mat);
 
-        rootNode.attachChild(geom);
+//        rootNode.attachChild(geom);
     }
 
     private void initInput() {
@@ -125,8 +125,8 @@ public class Main extends SimpleApplication implements ActionListener {
 
         navmesh = new NavMesh(mesh);
 
-        //crearBola();
-        crearCoche(new Vector3f(0, 0, 0));
+        crearBola();
+//        crearCoche(new Vector3f(0, 0, 0));
         
 
     }
@@ -201,7 +201,7 @@ public class Main extends SimpleApplication implements ActionListener {
         NavMeshPathfinder navi = new NavMeshPathfinder(navmesh);
 
         bola = new Bola(bolaNode, bolaControl, navi);
-        bolaNode.addControl(control);
+        bolaNode.addControl(bola);
         bolaNode.setUserData("radius", 0.5f); // Set user data para collision
 
     }
@@ -210,8 +210,8 @@ public class Main extends SimpleApplication implements ActionListener {
         // entre bullets y coche
         List<Spatial> listaBulletQuitar = new ArrayList<>();
         
-        System.out.println(playerNodes.getQuantity());
-        System.out.println(bulletNodes.getQuantity());
+//        System.out.println(playerNodes.getQuantity());
+//        System.out.println(bulletNodes.getQuantity());
         
         // Deteccion collision coches
         for (int i = 0; i < playerNodes.getQuantity(); ++i) {
@@ -287,6 +287,7 @@ public class Main extends SimpleApplication implements ActionListener {
             if (results.size() > 0) {
                 targetVector = results.getClosestCollision().getContactPoint();
                 control.computeNewPath(targetVector);
+                System.out.println("Vector pinchado = "+targetVector.toString());
             }
         }
 
