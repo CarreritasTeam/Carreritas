@@ -17,9 +17,6 @@ import com.jme3.export.InputCapsule;
 import com.jme3.export.JmeExporter;
 import com.jme3.export.JmeImporter;
 import com.jme3.export.OutputCapsule;
-import com.jme3.material.Material;
-import com.jme3.math.ColorRGBA;
-import com.jme3.math.Quaternion;
 import com.jme3.math.Ray;
 import com.jme3.math.Vector3f;
 import com.jme3.renderer.RenderManager;
@@ -29,8 +26,6 @@ import com.jme3.scene.Node;
 import com.jme3.scene.Spatial;
 import com.jme3.scene.control.AbstractControl;
 import com.jme3.scene.control.Control;
-import com.jme3.scene.shape.Box;
-import com.jme3.scene.shape.Cylinder;
 import java.io.IOException;
 
 /**
@@ -50,7 +45,7 @@ public class ControlCoche extends AbstractControl {
     private NavMesh navMesh;
 
     private Geometry player; // Despues se reemplazara al implementar el modelo3d
-    private Node bola;
+    private Node bola; //TODO esto hay que instanciarlo
 
     private boolean shot = false;
     private boolean shooting = false;
@@ -182,6 +177,11 @@ public class ControlCoche extends AbstractControl {
     public void setFinalPoint(Vector3f finalPoint) {
         this.finalPoint = finalPoint;
     }
+
+    public void setBola(Node bola) {
+        this.bola = bola;
+    }
+    
 
     public boolean isMoving() {
         return moving;

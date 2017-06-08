@@ -28,6 +28,7 @@ import com.jme3.scene.Mesh;
 import com.jme3.scene.Node;
 import com.jme3.scene.Spatial;
 import com.jme3.scene.shape.Box;
+import com.jme3.scene.shape.Sphere;
 
 /**
  * This is the Main Class of your Game. You should only do initialization here.
@@ -42,7 +43,8 @@ public class Main extends SimpleApplication implements ActionListener {
     private Vector3f targetVector = new Vector3f(30, 0, 9);
 
     private ControlCoche control;
-    private Node playerNode;
+    private Bola bola;
+    private Node playerNode,bolaNode;
     
     private NavMesh navmesh;
 
@@ -110,7 +112,10 @@ public class Main extends SimpleApplication implements ActionListener {
         
         navmesh = new NavMesh(mesh);
 
+        crearBola();
         crearCoche();
+        
+        
 
     }
 
@@ -151,6 +156,41 @@ public class Main extends SimpleApplication implements ActionListener {
         
         control = new ControlCoche(playerNode, playerControl, navi, assetManager, bulletAppState, rootNode);
         playerNode.addControl(control);
+
+    }
+    
+    
+    public void crearBola() {
+        Sphere c = new Sphere(5, 5, 1f);
+        Geometry player = new Geometry("Esfera", c);
+        Material material = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
+        material.setColor("Color", new ColorRGBA(0.247f, 0.285f, 0.678f, 1));
+        player.setMaterial(material);
+        player.setLocalTranslation(0, 3, 0);
+        //RigidBodyControl body = new RigidBodyControl(1f);
+        //player.addControl(body);
+
+        //body.setPhysicsLocation(new Vector3f(0, 9, 0));
+        //player.scale(0.05f, 0.05f, 0.05f);
+        playerNode = new Node("Esfera");
+        playerNode.attachChild(player);
+
+        BetterCharacterControl playerControl = new BetterCharacterControl(1f, 1f, 1);
+        playerNode.addControl(playerControl);
+        playerControl.setGravity(new Vector3f(0, -10, 0));
+        playerControl.setJumpForce(new Vector3f(0, 30, 0));
+        playerControl.warp(new Vector3f(0, 2, 0));
+
+        bulletAppState.getPhysicsSpace().add(playerControl);
+        bulletAppState.getPhysicsSpace().addAll(playerNode);
+        //bulletAppState.getPhysicsSpace().add(body);
+
+        rootNode.attachChild(playerNode);
+        
+        NavMeshPathfinder navi = new NavMeshPathfinder(navmesh);
+        
+        bola = new Bola(playerNode, playerControl, navi);
+        bolaNode.addControl(control);
 
     }
 
